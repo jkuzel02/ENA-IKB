@@ -1,0 +1,16 @@
+# ICMP test
+alert icmp any any -> any any (msg:"LOCAL Suricata ping test"; itype:8; sid:1000001; rev:1;)
+
+# Possible TCP SYN scan: 20 SYN packets per source/destination IP pair in 10s.
+# Counts packets, including retries, rather than distinct destination ports.
+alert tcp any any -> $HOME_NET any (msg:"LOCAL Possible TCP SYN port scan"; flags:S; flow:stateless; threshold:type both, track by_both, count 20, seconds 10; classtype:attempted-recon; sid:1000002; rev:1;)
+
+# Detect Basic credentials sent in an unencrypted HTTP request.
+alert http any any -> any any (msg:"LOCAL HTTP Basic credentials sent without TLS"; flow:established,to_server; http.header; content:"Authorization|3a| Basic "; nocase; classtype:policy-violation; sid:1000003; rev:1;)
+
+# Simulated command-and-control lookup: exact domain match, case insensitive.
+alert dns any any -> any any (msg:"LOCAL Suspicious DNS lookup for c2-test.example"; dns.query; content:"c2-test.example"; nocase; bsize:15; classtype:policy-violation; sid:1000004; rev:1;)
+
+# Detect GET requests for a URI ending in .sh over unencrypted HTTP.
+# This detects a download attempt, regardless of the server response.
+alert http any any -> any any (msg:"LOCAL Shell script download attempt over HTTP"; flow:established,to_server; http.method; content:"GET"; bsize:3; http.uri; content:".sh"; nocase; endswith; classtype:policy-violation; sid:1000005; rev:1;)
